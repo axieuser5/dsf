@@ -437,6 +437,7 @@ export default function ExpandableChatDemo() {
           setTimeout(typeMessage, 20 + Math.random() * 40); // Faster typing speed
         } else {
           // Send message after typing is complete
+          const sendDelay = currentMessage.content === "Tack, då har jag bestämt mig – jag vill boka ett bord!" ? 1000 : 500;
           setTimeout(() => {
             const userMessage = {
               id: Date.now(),
@@ -451,6 +452,7 @@ export default function ExpandableChatDemo() {
             // AI responds
             const nextStep = step + 1;
             if (nextStep < conversationScript.length && conversationScript[nextStep].sender === "ai") {
+              const aiResponseDelay = conversationScript[nextStep].isBookingIframe ? 2000 : 1500;
               setTimeout(() => {
                 const aiMessage = {
                   id: Date.now() + 1,
@@ -462,20 +464,23 @@ export default function ExpandableChatDemo() {
                 setMessages(prev => [...prev, aiMessage]);
                 setIsLoading(false);
 
+                // If this is the booking iframe message, pause longer to showcase the calendar
+                const nextDelay = conversationScript[nextStep].isBookingIframe ? 8000 : 2000;
+                
                 // Check if conversation is complete
                 if (nextStep === conversationScript.length - 1) { // Last message
                   setTimeout(() => {
                     setIsConversationComplete(true);
-                  }, 2000);
+                  }, nextDelay);
                 } else {
                   // Continue conversation
                   setTimeout(() => {
                     startAutoConversation(nextStep + 1);
-                  }, 2000);
+                  }, nextDelay);
                 }
-              }, 1500);
+              }, aiResponseDelay);
             }
-          }, 500); // Pause before sending
+          }, sendDelay); // Pause before sending
         }
       };
       

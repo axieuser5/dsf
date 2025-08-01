@@ -1,129 +1,97 @@
-import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+"use client"
 
-interface CalendarProps {
+import * as React from "react"
+import { ChevronLeft, ChevronRight, Clock } from "lucide-react"
+import { DayPicker } from "react-day-picker"
+import { cn } from "../lib/utils"
+
+// Button variants for the calendar
+const buttonVariants = {
+  outline: "border border-slate-300 bg-white hover:bg-slate-50 hover:text-slate-900",
+  ghost: "hover:bg-slate-100 hover:text-slate-900",
+}
+
+interface CalendarProps extends React.ComponentProps<typeof DayPicker> {
   onDateSelect?: (date: Date) => void;
   onTimeSelect?: (time: string) => void;
 }
 
-const Calendar: React.FC<CalendarProps> = ({ onDateSelect, onTimeSelect }) => {
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedTime, setSelectedTime] = useState<string | null>(null);
-
-  const monthNames = [
-    'Januari', 'Februari', 'Mars', 'April', 'Maj', 'Juni',
-    'Juli', 'Augusti', 'September', 'Oktober', 'November', 'December'
-  ];
-
-  const weekDays = ['Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör', 'Sön'];
+function Calendar({
+  className,
+  classNames,
+  showOutsideDays = true,
+  onDateSelect,
+  onTimeSelect,
+  ...props
+}: CalendarProps) {
+  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>();
+  const [selectedTime, setSelectedTime] = React.useState<string | null>(null);
 
   const availableTimes = ['17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30'];
 
-  const getDaysInMonth = (date: Date) => {
-    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-  };
-
-  const getFirstDayOfMonth = (date: Date) => {
-    const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-    return firstDay === 0 ? 6 : firstDay - 1; // Convert Sunday (0) to be last (6)
-  };
-
-  const navigateMonth = (direction: 'prev' | 'next') => {
-    setCurrentDate(prev => {
-      const newDate = new Date(prev);
-      if (direction === 'prev') {
-        newDate.setMonth(prev.getMonth() - 1);
-      } else {
-        newDate.setMonth(prev.getMonth() + 1);
-      }
-      return newDate;
-    });
-  };
-
-  const handleDateClick = (day: number) => {
-    const selected = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-    setSelectedDate(selected);
-    onDateSelect?.(selected);
+  const handleDateSelect = (date: Date | undefined) => {
+    setSelectedDate(date);
+    if (date && onDateSelect) {
+      onDateSelect(date);
+    }
   };
 
   const handleTimeClick = (time: string) => {
     setSelectedTime(time);
-    onTimeSelect?.(time);
-  };
-
-  const renderCalendarDays = () => {
-    const daysInMonth = getDaysInMonth(currentDate);
-    const firstDay = getFirstDayOfMonth(currentDate);
-    const days = [];
-
-    // Empty cells for days before the first day of the month
-    for (let i = 0; i < firstDay; i++) {
-      days.push(<div key={`empty-${i}`} className="p-2"></div>);
+    if (onTimeSelect) {
+      onTimeSelect(time);
     }
-
-    // Days of the month
-    for (let day = 1; day <= daysInMonth; day++) {
-      const isSelected = selectedDate && 
-        selectedDate.getDate() === day && 
-        selectedDate.getMonth() === currentDate.getMonth() &&
-        selectedDate.getFullYear() === currentDate.getFullYear();
-
-      const isToday = new Date().toDateString() === new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toDateString();
-      
-      days.push(
-        <button
-          key={day}
-          onClick={() => handleDateClick(day)}
-          className={`p-2 text-sm rounded-lg transition-colors hover:bg-blue-100 hover:text-blue-600 ${
-            isSelected 
-              ? 'bg-blue-600 text-white hover:bg-blue-700' 
-              : isToday 
-                ? 'bg-blue-50 text-blue-600 font-semibold'
-                : 'text-slate-700'
-          }`}
-        >
-          {day}
-        </button>
-      );
-    }
-
-    return days;
   };
 
   return (
     <div className="bg-white rounded-lg border border-slate-200 p-4 max-w-md mx-auto">
       <div className="mb-4">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-slate-800">Välj datum och tid</h3>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => navigateMonth('prev')}
-              className="p-1 hover:bg-slate-100 rounded"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <span className="font-medium text-slate-700 min-w-[120px] text-center">
-              {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-            </span>
-            <button
-              onClick={() => navigateMonth('next')}
-              className="p-1 hover:bg-slate-100 rounded"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Calendar Grid */}
-        <div className="grid grid-cols-7 gap-1 mb-4">
-          {weekDays.map(day => (
-            <div key={day} className="text-xs font-medium text-slate-500 p-2 text-center">
-              {day}
-            </div>
-          ))}
-          {renderCalendarDays()}
-        </div>
+        <h3 className="font-semibold text-slate-800 mb-4">Välj datum och tid</h3>
+        
+        <DayPicker
+          mode="single"
+          selected={selectedDate}
+          onSelect={handleDateSelect}
+          showOutsideDays={showOutsideDays}
+          className={cn("p-3", className)}
+          classNames={{
+            months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
+            month: "space-y-4",
+            caption: "flex justify-center pt-1 relative items-center",
+            caption_label: "text-sm font-medium",
+            nav: "space-x-1 flex items-center",
+            nav_button: cn(
+              "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 border border-slate-300 rounded-md hover:bg-slate-50"
+            ),
+            nav_button_previous: "absolute left-1",
+            nav_button_next: "absolute right-1",
+            table: "w-full border-collapse space-y-1",
+            head_row: "flex",
+            head_cell: "text-slate-500 rounded-md w-9 font-normal text-[0.8rem]",
+            row: "flex w-full mt-2",
+            cell: "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md [&:has([aria-selected].day-outside)]:bg-blue-100/50 [&:has([aria-selected])]:bg-blue-100 first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+            day: cn(
+              "h-9 w-9 p-0 font-normal aria-selected:opacity-100 hover:bg-slate-100 rounded-md transition-colors"
+            ),
+            day_range_end: "day-range-end",
+            day_selected: "bg-blue-600 text-white hover:bg-blue-700 hover:text-white focus:bg-blue-600 focus:text-white",
+            day_today: "bg-blue-50 text-blue-600 font-semibold",
+            day_outside: "day-outside text-slate-400 aria-selected:bg-blue-100/50 aria-selected:text-slate-400",
+            day_disabled: "text-slate-400 opacity-50",
+            day_range_middle: "aria-selected:bg-blue-100 aria-selected:text-blue-600",
+            day_hidden: "invisible",
+            ...classNames,
+          }}
+          components={{
+            IconLeft: ({ className, ...props }) => (
+              <ChevronLeft className={cn("h-4 w-4", className)} {...props} />
+            ),
+            IconRight: ({ className, ...props }) => (
+              <ChevronRight className={cn("h-4 w-4", className)} {...props} />
+            ),
+          }}
+          {...props}
+        />
       </div>
 
       {/* Time Selection */}
@@ -138,11 +106,12 @@ const Calendar: React.FC<CalendarProps> = ({ onDateSelect, onTimeSelect }) => {
               <button
                 key={time}
                 onClick={() => handleTimeClick(time)}
-                className={`p-2 text-sm border rounded-lg transition-colors ${
+                className={cn(
+                  "p-2 text-sm border rounded-lg transition-colors",
                   selectedTime === time
                     ? 'bg-blue-600 text-white border-blue-600'
                     : 'border-slate-200 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600'
-                }`}
+                )}
               >
                 {time}
               </button>
@@ -172,6 +141,8 @@ const Calendar: React.FC<CalendarProps> = ({ onDateSelect, onTimeSelect }) => {
       )}
     </div>
   );
-};
+}
 
-export default Calendar;
+Calendar.displayName = "Calendar"
+
+export { Calendar }
