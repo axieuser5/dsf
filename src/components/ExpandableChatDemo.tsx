@@ -473,7 +473,7 @@ export default function ExpandableChatDemo() {
         if (currentText.length < fullText.length) {
           currentText += fullText[currentText.length];
           setInput(currentText);
-          setTimeout(typeMessage, 50 + Math.random() * 100); // Random typing speed
+          setTimeout(typeMessage, 20 + Math.random() * 40); // Faster typing speed
         } else {
           // Send message after typing is complete
           setTimeout(() => {
