@@ -564,6 +564,7 @@ export default function ExpandableChatDemo() {
                   showCalendar: conversationScript[nextStep].showCalendar
                 };
                 
+                        setCursorVisible(true); // Ensure cursor is visible
                 setMessages(prev => [...prev, aiMessage]);
                 setIsLoading(false);
 
@@ -597,7 +598,8 @@ export default function ExpandableChatDemo() {
                       // Move cursor to time selection after date is selected
                       setTimeout(() => {
                         const timeButton = document.querySelector('[data-time="19:00"]');
-                        if (timeButton && cursorVisible) {
+                        if (timeButton) {
+                          setCursorVisible(true); // Ensure cursor is visible
                           const rect = timeButton.getBoundingClientRect();
                           setCursorPosition({ 
                             x: rect.left + rect.width / 2, 
@@ -617,7 +619,8 @@ export default function ExpandableChatDemo() {
                       // Move cursor to confirm button
                       setTimeout(() => {
                         const confirmButton = document.querySelector('[data-confirm-booking]');
-                        if (confirmButton && cursorVisible) {
+                        if (confirmButton) {
+                          setCursorVisible(true); // Ensure cursor is visible
                           const rect = confirmButton.getBoundingClientRect();
                           setCursorPosition({ 
                             x: rect.left + rect.width / 2, 
