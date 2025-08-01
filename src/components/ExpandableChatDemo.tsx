@@ -800,7 +800,7 @@ export default function ExpandableChatDemo() {
                             DayButton: ({ day, ...props }) => (
                               <button
                                 {...props}
-                                data-date={day.toISOString().split('T')[0]}
+                                data-date={day.date.toISOString().split('T')[0]}
                               />
                             )
                           }}
