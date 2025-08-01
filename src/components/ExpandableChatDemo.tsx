@@ -698,7 +698,6 @@ export default function ExpandableChatDemo() {
               <p className="text-xs text-slate-500">
                 Bokningssystemet stängs automatiskt om <span className="font-medium">8 sekunder</span>
               </p>
-              </div>
             </div>
           </div>
         </div>
