@@ -364,6 +364,8 @@ export default function ExpandableChatDemo() {
   const [chatOpen, setChatOpen] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0, visible: false });
+  const [isMouseAnimating, setIsMouseAnimating] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when new messages are added
@@ -463,8 +465,439 @@ export default function ExpandableChatDemo() {
                 // If this shows the calendar, trigger it and pause
                 if (conversationScript[nextStep].showCalendar) {
                   setTimeout(() => {
-                    
-                    // Simulate user clicking on January 15th after 2 seconds
+                    // Start mouse simulation
+                    simulateMouseInteraction();
+                  }, 1000);
+                  return; // Don't continue immediately
+                }
+                
+                // Check if conversation is complete
+                if (nextStep === conversationScript.length - 1) { // Last message
+                  setTimeout(() => {
+                    setIsConversationComplete(true);
+                  }, 2000);
+                } else {
+                  // Continue conversation
+                  setTimeout(() => {
+                    startAutoConversation(nextStep + 1);
+                  }, 2000);
+                }
+              }, aiResponseDelay);
+            }
+          }, sendDelay); // Pause before sending
+        }
+      };
+      
+      typeMessage();
+    } else {
+      // Skip AI messages as they're already handled
+      startAutoConversation(step + 1);
+    }
+  };
+
+  // Mouse simulation function
+  const simulateMouseInteraction = () => {
+    setIsMouseAnimating(true);
+    setMousePosition({ x: 0, y: 0, visible: true });
+    
+    // Step 1: Move to calendar (2 seconds)
+    setTimeout(() => {
+      const calendarElement = document.querySelector('[data-calendar="true"]');
+      if (calendarElement) {
+        const rect = calendarElement.getBoundingClientRect();
+        const targetX = rect.left + rect.width / 2;
+        const targetY = rect.top + rect.height / 2;
+        
+        setMousePosition({ x: targetX, y: targetY, visible: true });
+        
+        // Step 2: Click on January 15th (after 1 second)
+        setTimeout(() => {
+          const january15 = new Date(2025, 0, 15);
+          setSelectedDate(january15);
+          
+          // Step 3: Move to time selection (after 1.5 seconds)
+          setTimeout(() => {
+            const timeButton = document.querySelector('[data-time="19:00"]');
+            if (timeButton) {
+              const timeRect = timeButton.getBoundingClientRect();
+              setMousePosition({ 
+                x: timeRect.left + timeRect.width / 2, 
+                y: timeRect.top + timeRect.height / 2, 
+                visible: true 
+              });
+              
+              // Step 4: Click time (after 1 second)
+              setTimeout(() => {
+                // Visual click effect
+                setMousePosition(prev => ({ ...prev, clicking: true }));
+                
+                setTimeout(() => {
+                  setMousePosition(prev => ({ ...prev, clicking: false }));
+                  
+                  // Step 5: Move to guest count + button (after 1 second)
+                  setTimeout(() => {
+                    const plusButton = document.querySelector('[data-guest-plus="true"]');
+                    if (plusButton) {
+                      const plusRect = plusButton.getBoundingClientRect();
+                      setMousePosition({ 
+                        x: plusRect.left + plusRect.width / 2, 
+                        y: plusRect.top + plusRect.height / 2, 
+                        visible: true 
+                      });
+                      
+                      // Step 6: Click + button (after 1 second)
+                      setTimeout(() => {
+                        setMousePosition(prev => ({ ...prev, clicking: true }));
+                        
+                        setTimeout(() => {
+                          setMousePosition(prev => ({ ...prev, clicking: false }));
+                          
+                          // Step 7: Move to confirm button (after 1.5 seconds)
+                          setTimeout(() => {
+                            const confirmButton = document.querySelector('[data-confirm="true"]');
+                            if (confirmButton) {
+                              const confirmRect = confirmButton.getBoundingClientRect();
+                              setMousePosition({ 
+                                x: confirmRect.left + confirmRect.width / 2, 
+                                y: confirmRect.top + confirmRect.height / 2, 
+                                visible: true 
+                              });
+                              
+                              // Step 8: Click confirm (after 1 second)
+                              setTimeout(() => {
+                                setMousePosition(prev => ({ ...prev, clicking: true }));
+                                
+                                setTimeout(() => {
+                                  setMousePosition(prev => ({ ...prev, clicking: false }));
+                                  
+                                  // Hide mouse and continue conversation (after 1 second)
+                                  setTimeout(() => {
+                                    setMousePosition({ x: 0, y: 0, visible: false });
+                                    setIsMouseAnimating(false);
+                                    setSelectedDate(undefined);
+                                    
+                                    if (currentStep === conversationScript.length - 1) {
+                                      setIsConversationComplete(true);
+                                    } else {
+                                      startAutoConversation(currentStep + 1);
+                                    }
+                                  }, 1000);
+                                }, 200);
+                              }, 1000);
+                            }
+                          }, 1500);
+                        }, 200);
+                      }, 1000);
+                    }
+                  }, 1000);
+                }, 200);
+              }, 1000);
+            }
+          }, 1500);
+        }, 1000);
+      }
+    }, 2000);
+  };
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || currentStep >= conversationScript.length) return;
+
+    // Add user message
+    const userMessage = {
+      id: messages.length + 1,
+      content: input,
+      sender: "user",
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    setInput("");
+    setIsLoading(true);
+
+    // Find next AI response
+    const nextAiStep = currentStep + 1;
+    if (nextAiStep < conversationScript.length && conversationScript[nextAiStep].sender === "ai") {
+      setTimeout(() => {
+        const aiMessage = {
+          id: messages.length + 2,
+          content: conversationScript[nextAiStep].content,
+          sender: "ai",
+          showCalendar: conversationScript[nextAiStep].showCalendar
+        };
+        
+        setMessages(prev => [...prev, aiMessage]);
+        setCurrentStep(nextAiStep + 1);
+        setIsLoading(false);
+
+        // Handle calendar for manual interaction
+        if (conversationScript[nextAiStep].showCalendar) {
+          setTimeout(() => {
+            simulateMouseInteraction();
+          }, 1000);
+        }
+        // Check if conversation is complete
+        if (nextAiStep === conversationScript.length - 1) { // Last message
+          setTimeout(() => {
+            setIsConversationComplete(true);
+          }, 2000);
+        }
+      }, 1500);
+    } else {
+      setIsLoading(false);
+      setCurrentStep(nextAiStep);
+    }
+  };
+
+  const handleAttachFile = () => {
+    //
+  };
+
+  const handleMicrophoneClick = () => {
+    //
+  };
+
+  return (
+    <div className="h-[800px] relative">
+      {/* Animated Mouse Cursor */}
+      {mousePosition.visible && (
+        <div
+          className={`fixed pointer-events-none z-[9999] transition-all duration-1000 ease-out ${
+            mousePosition.clicking ? 'scale-90' : 'scale-100'
+          }`}
+          style={{
+            left: `${mousePosition.x}px`,
+            top: `${mousePosition.y}px`,
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
+          <div className="relative">
+            {/* Mouse cursor */}
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              className={`drop-shadow-lg transition-all duration-200 ${
+                mousePosition.clicking ? 'scale-90' : 'scale-100'
+              }`}
+            >
+              <path
+                d="M8.5 2L8.5 14.5L11.5 11L15 17L17 16L13.5 10L17.5 10L8.5 2Z"
+                fill="white"
+                stroke="black"
+                strokeWidth="1"
+              />
+            </svg>
+            
+            {/* Click effect */}
+            {mousePosition.clicking && (
+              <div className="absolute -top-2 -left-2 w-8 h-8 border-2 border-blue-500 rounded-full animate-ping opacity-75" />
+            )}
+          </div>
+        </div>
+      )}
+      
+      <ExpandableChat
+        size="xl"
+        position="bottom-right"
+        icon={<Bot className="h-6 w-6" />}
+        isOpen={chatOpen}
+        onToggle={setChatOpen}
+      >
+        <ExpandableChatHeader className="flex-col text-center justify-center">
+          <h1 className="text-xl font-semibold">Restaurang Stella 🍽️</h1>
+          <p className="text-sm text-slate-500">
+            Välkommen! Sofia hjälper dig med bokning
+          </p>
+        </ExpandableChatHeader>
+
+        <ExpandableChatBody>
+          <ChatMessageList>
+            {messages.map((message) => (
+              <ChatBubble
+                key={message.id}
+                variant={message.sender === "user" ? "sent" : "received"}
+              >
+                <ChatBubbleAvatar
+                  className="h-8 w-8 shrink-0"
+                  src={
+                    message.sender === "user"
+                      ? "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?w=64&h=64&fit=crop&crop=face"
+                      : "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?w=64&h=64&fit=crop&crop=face"
+                  }
+                  fallback={message.sender === "user" ? "DU" : "SF"}
+                />
+                <ChatBubbleMessage
+                  variant={message.sender === "user" ? "sent" : "received"}
+                >
+                  {message.content}
+                  
+                  {/* Calendar inside the AI message */}
+                  {message.showCalendar && (
+                    <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                      <div className="text-center mb-3">
+                        <h3 className="text-sm font-semibold text-slate-800 mb-1">
+                          Välj datum för bokning 📅
+                        </h3>
+                        <p className="text-xs text-slate-600">
+                          Januari 2025 - Klicka på ett datum
+                        </p>
+                      </div>
+                      
+                      <div className="flex justify-center">
+                        <div data-calendar="true">
+                          <Calendar
+                            mode="single"
+                            selected={selectedDate}
+                            onSelect={setSelectedDate}
+                            defaultMonth={new Date(2025, 0)} // January 2025
+                            className="rounded-lg border border-slate-200 p-2 bg-white shadow-sm scale-90"
+                          />
+                        </div>
+                      </div>
+                      
+                      {selectedDate && (
+                        <div className="mt-3 space-y-3">
+                          <div className="p-2 bg-green-50 border border-green-200 rounded-lg text-center">
+                            <p className="text-xs text-green-800 font-medium">
+                              ✅ Valt datum: {selectedDate.toLocaleDateString('sv-SE', { 
+                                weekday: 'long', 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric' 
+                              })}
+                            </p>
+                          </div>
+                          
+                          {/* Time Selection */}
+                          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <h4 className="text-xs font-semibold text-blue-800 mb-2 text-center">Välj tid ⏰</h4>
+                            <div className="grid grid-cols-3 gap-1">
+                              {['18:00', '18:30', '19:00', '19:30', '20:00', '20:30'].map(time => (
+                                <button
+                                  key={time}
+                                  data-time={time}
+                                  className="p-1.5 text-xs border border-blue-300 rounded bg-white hover:bg-blue-100 transition-colors"
+                                >
+                                  {time}
+                                </button>
+                              ))}
+                            </div>
+                            <div className="mt-2 text-center">
+                              <span className="inline-block px-2 py-1 bg-blue-600 text-white text-xs rounded font-medium">
+                                19:00 ✓
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {/* Guest Count */}
+                          <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                            <h4 className="text-xs font-semibold text-purple-800 mb-2 text-center">Antal gäster 👥</h4>
+                            <div className="flex justify-center items-center gap-3">
+                              <button className="w-6 h-6 rounded-full border border-purple-300 bg-white hover:bg-purple-100 flex items-center justify-center text-xs">
+                                -
+                              </button>
+                              <span className="px-3 py-1 bg-purple-600 text-white text-xs rounded font-medium min-w-[40px] text-center">
+                                4
+                              </span>
+                              <button 
+                                data-guest-plus="true"
+                                className="w-6 h-6 rounded-full border border-purple-300 bg-white hover:bg-purple-100 flex items-center justify-center text-xs"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+                          
+                          {/* Final Confirmation */}
+                          <div className="p-3 bg-green-100 border border-green-300 rounded-lg">
+                            <div className="text-center space-y-1">
+                              <p className="text-xs text-green-800">
+                                <strong>📅 {selectedDate.toLocaleDateString('sv-SE', { 
+                                  weekday: 'short', 
+                                  month: 'short', 
+                                  day: 'numeric' 
+                                })}</strong> • <strong>⏰ 19:00</strong> • <strong>👥 4 personer</strong>
+                              </p>
+                              <button 
+                                data-confirm="true"
+                                className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors text-xs font-medium mt-2"
+                              >
+                                ✅ Bekräfta bokning
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </ChatBubbleMessage>
+              </ChatBubble>
+            ))}
+
+            {isLoading && (
+              <ChatBubble variant="received">
+                <ChatBubbleAvatar
+                  className="h-8 w-8 shrink-0"
+                  src="https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?w=64&h=64&fit=crop&crop=face"
+                  fallback="SF"
+                />
+                <ChatBubbleMessage isLoading />
+              </ChatBubble>
+            )}
+          </ChatMessageList>
+          <div ref={messagesEndRef} />
+        </ExpandableChatBody>
+
+        <ExpandableChatFooter>
+          <form
+            onSubmit={handleSubmit}
+            className="relative rounded-lg border border-slate-300 bg-white focus-within:ring-1 focus-within:ring-blue-500 p-1"
+          >
+            <ChatInput
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Skriv ditt meddelande..."
+              className="min-h-12 resize-none rounded-lg bg-white border-0 p-3 shadow-none focus-visible:ring-0 ring-2 ring-yellow-400 ring-opacity-75 animate-pulse"
+              disabled
+              readOnly
+            />
+            <div className="flex items-center p-3 pt-0 justify-between">
+              <div className="flex">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  type="button"
+                  onClick={handleAttachFile}
+                >
+                  <Paperclip className="size-4" />
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  type="button"
+                  onClick={handleMicrophoneClick}
+                >
+                  <Mic className="size-4" />
+                </Button>
+              </div>
+              <Button 
+                type="submit" 
+                size="sm" 
+                className="ml-auto gap-1.5"
+                disabled
+              >
+                Skicka
+                <CornerDownLeft className="size-3.5" />
+              </Button>
+            </div>
+          </form>
+        </ExpandableChatFooter>
+      </ExpandableChat>
+    </div>
+  );
+}
                     setTimeout(() => {
                       const january15 = new Date(2025, 0, 15); // January 15, 2025
                       setSelectedDate(january15);
