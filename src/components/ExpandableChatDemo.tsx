@@ -11,6 +11,48 @@ function cn(...inputs: (string | undefined | null | boolean)[]) {
   return inputs.filter(Boolean).join(" ");
 }
 
+// Simulated Cursor Component
+const SimulatedCursor = ({ x, y, visible, clicking }: { x: number; y: number; visible: boolean; clicking: boolean }) => {
+  if (!visible) return null;
+  
+  return (
+    <div
+      className={`fixed pointer-events-none z-[9999] transition-all duration-300 ease-out ${
+        clicking ? 'scale-90' : 'scale-100'
+      }`}
+      style={{
+        left: `${x}px`,
+        top: `${y}px`,
+        transform: 'translate(-2px, -2px)'
+      }}
+    >
+      {/* Cursor pointer */}
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        className={`drop-shadow-lg transition-all duration-150 ${
+          clicking ? 'scale-75' : 'scale-100'
+        }`}
+      >
+        <path
+          d="M8.5 2L20.5 14L14.5 15L11.5 22L8.5 2Z"
+          fill="white"
+          stroke="black"
+          strokeWidth="1.5"
+          strokeLinejoin="round"
+        />
+      </svg>
+      
+      {/* Click ripple effect */}
+      {clicking && (
+        <div className="absolute top-2 left-2 w-4 h-4 border-2 border-blue-500 rounded-full animate-ping opacity-75" />
+      )}
+    </div>
+  );
+};
+
 // shadcn/button
 const buttonVariants = cva(
   "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
@@ -264,6 +306,7 @@ const ExpandableChat: React.FC<ExpandableChatProps> = ({
           size="icon"
           className="absolute top-2 right-2 sm:hidden"
           onClick={toggleChat}
+          data-chat-toggle
         >
           <X className="h-4 w-4" />
         </Button>
@@ -364,6 +407,9 @@ export default function ExpandableChatDemo() {
   const [chatOpen, setChatOpen] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
+  const [cursorVisible, setCursorVisible] = useState(false);
+  const [cursorClicking, setCursorClicking] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when new messages are added
@@ -378,6 +424,25 @@ export default function ExpandableChatDemo() {
   // Auto-open chat initially and restart loop
   React.useEffect(() => {
     const openChat = () => {
+      // Show cursor and move to chat button
+      setCursorVisible(true);
+      const chatButton = document.querySelector('[data-chat-toggle]');
+      if (chatButton) {
+        const rect = chatButton.getBoundingClientRect();
+        setCursorPosition({ 
+          x: rect.left + rect.width / 2, 
+          y: rect.top + rect.height / 2 
+        });
+        
+        // Simulate click after cursor reaches button
+        setTimeout(() => {
+          setCursorClicking(true);
+          setTimeout(() => {
+            setCursorClicking(false);
+          }, 150);
+        }, 500);
+      }
+      
       setChatOpen(true);
       setMessages([]);
       setCurrentStep(0);
@@ -396,7 +461,7 @@ export default function ExpandableChatDemo() {
         setTimeout(() => {
           startAutoConversation(1);
         }, 2000);
-      }, 1000);
+      }, 1500);
     };
 
     if (!chatOpen) {
@@ -409,6 +474,8 @@ export default function ExpandableChatDemo() {
   React.useEffect(() => {
     if (isConversationComplete) {
       const timer = setTimeout(() => {
+        // Hide cursor when closing
+        setCursorVisible(false);
         setChatOpen(false);
       }, 3000); // Close after 3 seconds
       return () => clearTimeout(timer);
@@ -422,6 +489,26 @@ export default function ExpandableChatDemo() {
     const currentMessage = conversationScript[step];
     
     if (currentMessage.sender === "user") {
+      // Move cursor to input field when user is typing
+      setTimeout(() => {
+        const inputField = document.querySelector('textarea[placeholder="Skriv ditt meddelande..."]');
+        if (inputField && cursorVisible) {
+          const rect = inputField.getBoundingClientRect();
+          setCursorPosition({ 
+            x: rect.left + 20, 
+            y: rect.top + rect.height / 2 
+          });
+          
+          // Simulate click on input
+          setTimeout(() => {
+            setCursorClicking(true);
+            setTimeout(() => {
+              setCursorClicking(false);
+            }, 150);
+          }, 300);
+        }
+      }, 200);
+      
       // Simulate typing for user message
       let currentText = "";
       const fullText = currentMessage.content;
@@ -433,6 +520,26 @@ export default function ExpandableChatDemo() {
           setTimeout(typeMessage, 20 + Math.random() * 40); // Faster typing speed
         } else {
           // Send message after typing is complete
+          // Move cursor to send button
+          setTimeout(() => {
+            const sendButton = document.querySelector('button[type="submit"]');
+            if (sendButton && cursorVisible) {
+              const rect = sendButton.getBoundingClientRect();
+              setCursorPosition({ 
+                x: rect.left + rect.width / 2, 
+                y: rect.top + rect.height / 2 
+              });
+              
+              // Simulate click on send button
+              setTimeout(() => {
+                setCursorClicking(true);
+                setTimeout(() => {
+                  setCursorClicking(false);
+                }, 150);
+              }, 200);
+            }
+          }, 100);
+          
           const sendDelay = currentMessage.content === "Tack, då har jag bestämt mig – jag vill boka ett bord!" ? 1000 : 500;
           setTimeout(() => {
             const userMessage = {
@@ -466,8 +573,66 @@ export default function ExpandableChatDemo() {
                     
                     // Simulate user clicking on January 15th after 2 seconds
                     setTimeout(() => {
+                      // Move cursor to January 15th date
+                      const dateButton = document.querySelector('[data-date="2025-01-15"]');
+                      if (dateButton && cursorVisible) {
+                        const rect = dateButton.getBoundingClientRect();
+                        setCursorPosition({ 
+                          x: rect.left + rect.width / 2, 
+                          y: rect.top + rect.height / 2 
+                        });
+                        
+                        // Simulate click on date
+                        setTimeout(() => {
+                          setCursorClicking(true);
+                          setTimeout(() => {
+                            setCursorClicking(false);
+                          }, 150);
+                        }, 300);
+                      }
+                      
                       const january15 = new Date(2025, 0, 15); // January 15, 2025
                       setSelectedDate(january15);
+                      
+                      // Move cursor to time selection after date is selected
+                      setTimeout(() => {
+                        const timeButton = document.querySelector('[data-time="19:00"]');
+                        if (timeButton && cursorVisible) {
+                          const rect = timeButton.getBoundingClientRect();
+                          setCursorPosition({ 
+                            x: rect.left + rect.width / 2, 
+                            y: rect.top + rect.height / 2 
+                          });
+                          
+                          // Simulate click on time
+                          setTimeout(() => {
+                            setCursorClicking(true);
+                            setTimeout(() => {
+                              setCursorClicking(false);
+                            }, 150);
+                          }, 300);
+                        }
+                      }, 1000);
+                      
+                      // Move cursor to confirm button
+                      setTimeout(() => {
+                        const confirmButton = document.querySelector('[data-confirm-booking]');
+                        if (confirmButton && cursorVisible) {
+                          const rect = confirmButton.getBoundingClientRect();
+                          setCursorPosition({ 
+                            x: rect.left + rect.width / 2, 
+                            y: rect.top + rect.height / 2 
+                          });
+                          
+                          // Simulate click on confirm
+                          setTimeout(() => {
+                            setCursorClicking(true);
+                            setTimeout(() => {
+                              setCursorClicking(false);
+                            }, 150);
+                          }, 300);
+                        }
+                      }, 3000);
                       
                       // Continue conversation after 10 more seconds (12 total)
                       setTimeout(() => {
@@ -570,6 +735,13 @@ export default function ExpandableChatDemo() {
 
   return (
     <div className="h-[800px] relative">
+      <SimulatedCursor 
+        x={cursorPosition.x} 
+        y={cursorPosition.y} 
+        visible={cursorVisible} 
+        clicking={cursorClicking} 
+      />
+      
       <ExpandableChat
         size="xl"
         position="bottom-right"
@@ -624,6 +796,14 @@ export default function ExpandableChatDemo() {
                           onSelect={setSelectedDate}
                           defaultMonth={new Date(2025, 0)} // January 2025
                           className="rounded-lg border border-slate-200 p-2 bg-white shadow-sm scale-90"
+                          components={{
+                            DayButton: ({ day, ...props }) => (
+                              <button
+                                {...props}
+                                data-date={day.toISOString().split('T')[0]}
+                              />
+                            )
+                          }}
                         />
                       </div>
                       
@@ -647,6 +827,7 @@ export default function ExpandableChatDemo() {
                               {['18:00', '18:30', '19:00', '19:30', '20:00', '20:30'].map(time => (
                                 <button
                                   key={time}
+                                  data-time={time}
                                   className="p-1.5 text-xs border border-blue-300 rounded bg-white hover:bg-blue-100 transition-colors"
                                 >
                                   {time}
@@ -687,6 +868,7 @@ export default function ExpandableChatDemo() {
                                 })}</strong> • <strong>⏰ 19:00</strong> • <strong>👥 4 personer</strong>
                               </p>
                               <button className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors text-xs font-medium mt-2">
+                                data-confirm-booking
                                 ✅ Bekräfta bokning
                               </button>
                             </div>
