@@ -132,7 +132,7 @@ const ChatBubbleMessage = React.forwardRef<
         ? "bg-blue-600 text-white"
         : "bg-slate-100 text-slate-800",
       isLoading && "animate-pulse",
-      isBookingIframe && "p-0 max-w-[90%] bg-transparent",
+      isBookingIframe && "p-2 max-w-[95%] bg-white border border-slate-200",
       className,
     )}
     {...props}
