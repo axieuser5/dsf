@@ -4,7 +4,7 @@ import React, { useRef, useState, FormEvent } from "react";
 import { X, MessageCircle, Send, Bot, Paperclip, Mic, CornerDownLeft } from "lucide-react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-import Calendar from './Calendar';
+import { Calendar } from './ui/calendar';
 
 // lib/utils.ts (simplified for this single file)
 function cn(...inputs: (string | undefined | null | boolean)[]) {
@@ -363,6 +363,8 @@ export default function ExpandableChatDemo() {
   const [isLoading, setIsLoading] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [showBookingIframe, setShowBookingIframe] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when new messages are added
@@ -463,21 +465,25 @@ export default function ExpandableChatDemo() {
                 // If this shows the booking iframe, trigger it and pause
                 if (conversationScript[nextStep].showBookingIframe) {
                   setTimeout(() => {
-                    setShowBookingIframe(true);
+                    setShowCalendar(true);
                     
-                    // Auto-close iframe after 8 seconds and continue conversation
+                    // Simulate user clicking on August 15th after 2 seconds
                     setTimeout(() => {
-                      setShowBookingIframe(false);
+                      const august15 = new Date(2024, 7, 15); // August 15, 2024
+                      setSelectedDate(august15);
                       
-                      // Continue conversation after iframe closes
+                      // Close calendar after 6 more seconds and continue conversation
                       setTimeout(() => {
+                        setShowCalendar(false);
+                        setSelectedDate(undefined);
+                        
                         if (nextStep === conversationScript.length - 1) {
                           setIsConversationComplete(true);
                         } else {
                           startAutoConversation(nextStep + 1);
                         }
-                      }, 1000);
-                    }, 8000);
+                      }, 6000);
+                    }, 2000);
                   }, 1000);
                   return; // Don't continue immediately
                 }
@@ -539,9 +545,9 @@ export default function ExpandableChatDemo() {
         // Handle booking iframe for manual interaction
         if (conversationScript[nextAiStep].showBookingIframe) {
           setTimeout(() => {
-            setShowBookingIframe(true);
+            setShowCalendar(true);
             setTimeout(() => {
-              setShowBookingIframe(false);
+              setShowCalendar(false);
             }, 8000);
           }, 1000);
         }
@@ -667,36 +673,48 @@ export default function ExpandableChatDemo() {
         </ExpandableChatFooter>
       </ExpandableChat>
 
-      {/* Booking Calendar Iframe Modal */}
-      {showBookingIframe && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl h-[80vh] transform transition-all duration-300 scale-100 flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b border-slate-200">
-              <div>
-                <h3 className="text-xl font-semibold text-slate-800">
-                  Restaurang Stella - Bokningssystem 🍽️
-                </h3>
-                <p className="text-sm text-slate-600">
-                  Välj datum och tid som passar er bäst
-                </p>
-              </div>
-              <button 
-                onClick={() => setShowBookingIframe(false)}
-                className="text-slate-400 hover:text-slate-600 transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
+      {/* Booking Calendar Inside Chat */}
+      {showCalendar && (
+        <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 z-50 animate-in slide-in-from-bottom duration-300">
+          <div className="flex flex-col items-center">
+            <div className="mb-4 text-center">
+              <h3 className="text-lg font-semibold text-slate-800 mb-1">
+                Välj datum för bokning 📅
+              </h3>
+              <p className="text-sm text-slate-600">
+                Augusti 2024 - Klicka på ett datum
+              </p>
             </div>
-            <div className="flex-1 p-4">
-              <iframe
-                src="https://calendly.com/demo"
-                className="w-full h-full border-0 rounded-lg"
-                title="Booking Calendar"
+            
+            <div className="flex justify-center">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                defaultMonth={new Date(2024, 7)} // August 2024
+                className="rounded-lg border border-slate-200 p-3 bg-white shadow-sm"
+                classNames={{
+                  day_button: selectedDate ? "bg-blue-600 text-white hover:bg-blue-700" : undefined,
+                }}
               />
             </div>
-            <div className="p-4 border-t border-slate-200 text-center">
+            
+            {selectedDate && (
+              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg text-center">
+                <p className="text-sm text-green-800 font-medium">
+                  ✅ Valt datum: {selectedDate.toLocaleDateString('sv-SE', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </p>
+              </div>
+            )}
+            
+            <div className="mt-3 text-center">
               <p className="text-xs text-slate-500">
-                Bokningssystemet stängs automatiskt om <span className="font-medium">8 sekunder</span>
+                Kalendern stängs automatiskt om några sekunder...
               </p>
             </div>
           </div>
