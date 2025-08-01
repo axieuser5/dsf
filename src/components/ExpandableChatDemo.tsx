@@ -4,6 +4,7 @@ import React, { useRef, useState, FormEvent } from "react";
 import { X, MessageCircle, Send, Bot, Paperclip, Mic, CornerDownLeft } from "lucide-react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
+import Calendar from './Calendar';
 
 // lib/utils.ts (simplified for this single file)
 function cn(...inputs: (string | undefined | null | boolean)[]) {
@@ -131,7 +132,7 @@ const ChatBubbleMessage = React.forwardRef<
         ? "bg-blue-600 text-white"
         : "bg-slate-100 text-slate-800",
       isLoading && "animate-pulse",
-      isBookingIframe && "p-3 max-w-[90%]",
+      isBookingIframe && "p-0 max-w-[90%] bg-transparent",
       className,
     )}
     {...props}
@@ -143,47 +144,7 @@ const ChatBubbleMessage = React.forwardRef<
         <div className="h-2 w-2 rounded-full bg-current animate-bounce" />
       </div>
     ) : isBookingIframe ? (
-      <div className="bg-white rounded-lg border border-slate-200 p-4">
-        <h3 className="font-semibold text-slate-800 mb-3">Välj datum och tid</h3>
-        <div className="grid grid-cols-7 gap-1 mb-4">
-          <div className="text-xs font-medium text-slate-500 p-2 text-center">Mån</div>
-          <div className="text-xs font-medium text-slate-500 p-2 text-center">Tis</div>
-          <div className="text-xs font-medium text-slate-500 p-2 text-center">Ons</div>
-          <div className="text-xs font-medium text-slate-500 p-2 text-center">Tor</div>
-          <div className="text-xs font-medium text-slate-500 p-2 text-center">Fre</div>
-          <div className="text-xs font-medium text-slate-500 p-2 text-center">Lör</div>
-          <div className="text-xs font-medium text-slate-500 p-2 text-center">Sön</div>
-          
-          {/* Empty cells for calendar alignment */}
-          <div></div>
-          <div></div>
-          <div></div>
-          
-          {/* Calendar dates */}
-          {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28].map(day => (
-            <button
-              key={day}
-              className="p-2 text-sm rounded hover:bg-blue-100 hover:text-blue-600 transition-colors"
-            >
-              {day}
-            </button>
-          ))}
-        </div>
-        
-        <div className="border-t pt-3">
-          <h4 className="font-medium text-slate-700 mb-2">Tillgängliga tider:</h4>
-          <div className="grid grid-cols-3 gap-2">
-            {['17:00', '18:00', '19:00', '20:00', '21:00', '22:00'].map(time => (
-              <button
-                key={time}
-                className="p-2 text-sm border border-slate-200 rounded hover:bg-blue-600 hover:text-white transition-colors"
-              >
-                {time}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+      <Calendar />
     ) : (
       props.children
     )}
@@ -640,7 +601,7 @@ export default function ExpandableChatDemo() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Skriv ditt meddelande..."
-              className="min-h-12 resize-none rounded-lg bg-white border-0 p-3 shadow-none focus-visible:ring-0"
+              className="min-h-12 resize-none rounded-lg bg-white border-0 p-3 shadow-none focus-visible:ring-0 ring-2 ring-yellow-400 ring-opacity-75 animate-pulse"
               disabled
               readOnly
             />
