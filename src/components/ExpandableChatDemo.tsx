@@ -117,13 +117,12 @@ interface ChatBubbleMessageProps
   extends React.HTMLAttributes<HTMLDivElement> {
   variant?: "sent" | "received";
   isLoading?: boolean;
-  isBookingIframe?: boolean;
 }
 
 const ChatBubbleMessage = React.forwardRef<
   HTMLDivElement,
   ChatBubbleMessageProps
->(({ className, variant = "received", isLoading = false, isBookingIframe = false, ...props }, ref) => (
+>(({ className, variant = "received", isLoading = false, ...props }, ref) => (
   <div
     ref={ref}
     className={cn(
@@ -132,7 +131,6 @@ const ChatBubbleMessage = React.forwardRef<
         ? "bg-blue-600 text-white"
         : "bg-slate-100 text-slate-800",
       isLoading && "animate-pulse",
-      isBookingIframe && "p-2 max-w-[95%] bg-white border border-slate-200",
       className,
     )}
     {...props}
@@ -143,8 +141,6 @@ const ChatBubbleMessage = React.forwardRef<
         <div className="h-2 w-2 rounded-full bg-current animate-bounce [animation-delay:-0.15s]" />
         <div className="h-2 w-2 rounded-full bg-current animate-bounce" />
       </div>
-    ) : isBookingIframe ? (
-      <Calendar />
     ) : (
       props.children
     )}
@@ -356,7 +352,7 @@ export default function ExpandableChatDemo() {
     { "sender": "ai", "content": "Det är inga problem alls. Vi har rullstolsanpassad entré, hiss och flera bord med gott om utrymme. Toaletten är också tillgänglighetsanpassad." },
     { "sender": "user", "content": "Tack, då har jag bestämt mig – jag vill boka ett bord!" },
     { "sender": "ai", "content": "Vad roligt! Här är vårt bokningssystem – välj gärna datum och tid som passar er:" },
-    { "sender": "ai", "content": "", "isBookingIframe": true },
+    { "sender": "ai", "content": "Bokningssystemet öppnas nu...", "showCalendarPopup": true },
     { "sender": "user", "content": "Perfekt, tack för hjälpen!" },
     { "sender": "ai", "content": "Jag är fortfarande här om du behöver hjälp - du kommer få bokningsbekräftelse efter du har valt datum och tid! Säg bara om det finns något jag kan hjälpa dig med!" }
   ];
@@ -367,6 +363,7 @@ export default function ExpandableChatDemo() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [showCalendarPopup, setShowCalendarPopup] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when new messages are added
@@ -458,25 +455,44 @@ export default function ExpandableChatDemo() {
                   id: Date.now() + 1,
                   content: conversationScript[nextStep].content,
                   sender: "ai",
-                  isBookingIframe: conversationScript[nextStep].isBookingIframe
+                  showCalendarPopup: conversationScript[nextStep].showCalendarPopup
                 };
                 
                 setMessages(prev => [...prev, aiMessage]);
                 setIsLoading(false);
 
-                // If this is the booking iframe message, pause longer to showcase the calendar
-                const nextDelay = conversationScript[nextStep].isBookingIframe ? 8000 : 2000;
+                // If this shows the calendar popup, trigger it and pause
+                if (conversationScript[nextStep].showCalendarPopup) {
+                  setTimeout(() => {
+                    setShowCalendarPopup(true);
+                    
+                    // Auto-close popup after 8 seconds and continue conversation
+                    setTimeout(() => {
+                      setShowCalendarPopup(false);
+                      
+                      // Continue conversation after popup closes
+                      setTimeout(() => {
+                        if (nextStep === conversationScript.length - 1) {
+                          setIsConversationComplete(true);
+                        } else {
+                          startAutoConversation(nextStep + 1);
+                        }
+                      }, 1000);
+                    }, 8000);
+                  }, 1000);
+                  return; // Don't continue immediately
+                }
                 
                 // Check if conversation is complete
                 if (nextStep === conversationScript.length - 1) { // Last message
                   setTimeout(() => {
                     setIsConversationComplete(true);
-                  }, nextDelay);
+                  }, 2000);
                 } else {
                   // Continue conversation
                   setTimeout(() => {
                     startAutoConversation(nextStep + 1);
-                  }, nextDelay);
+                  }, 2000);
                 }
               }, aiResponseDelay);
             }
@@ -514,13 +530,22 @@ export default function ExpandableChatDemo() {
           id: messages.length + 2,
           content: conversationScript[nextAiStep].content,
           sender: "ai",
-          isBookingIframe: conversationScript[nextAiStep].isBookingIframe
+          showCalendarPopup: conversationScript[nextAiStep].showCalendarPopup
         };
         
         setMessages(prev => [...prev, aiMessage]);
         setCurrentStep(nextAiStep + 1);
         setIsLoading(false);
 
+        // Handle calendar popup for manual interaction
+        if (conversationScript[nextAiStep].showCalendarPopup) {
+          setTimeout(() => {
+            setShowCalendarPopup(true);
+            setTimeout(() => {
+              setShowCalendarPopup(false);
+            }, 8000);
+          }, 1000);
+        }
         // Check if conversation is complete
         if (nextAiStep === conversationScript.length - 1) { // Last message
           setTimeout(() => {
@@ -576,9 +601,8 @@ export default function ExpandableChatDemo() {
                 />
                 <ChatBubbleMessage
                   variant={message.sender === "user" ? "sent" : "received"}
-                  isBookingIframe={message.isBookingIframe}
                 >
-                  {!message.isBookingIframe && message.content}
+                  {message.content}
                 </ChatBubbleMessage>
               </ChatBubble>
             ))}
@@ -643,6 +667,31 @@ export default function ExpandableChatDemo() {
           </form>
         </ExpandableChatFooter>
       </ExpandableChat>
+
+      {/* Calendar Popup Modal */}
+      {showCalendarPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full transform transition-all duration-300 scale-100">
+            <div className="p-6">
+              <div className="text-center mb-4">
+                <h3 className="text-xl font-semibold text-slate-800 mb-2">
+                  Boka ditt bord 🍽️
+                </h3>
+                <p className="text-sm text-slate-600">
+                  Välj datum och tid som passar er bäst
+                </p>
+              </div>
+              <Calendar />
+              <div className="mt-4 text-center">
+                <p className="text-xs text-slate-500">
+                  Bokningssystemet stängs automatiskt om {" "}
+                  <span className="font-medium">8 sekunder</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
