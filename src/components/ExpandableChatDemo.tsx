@@ -364,8 +364,6 @@ export default function ExpandableChatDemo() {
   const [chatOpen, setChatOpen] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0, visible: false });
-  const [isMouseAnimating, setIsMouseAnimating] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when new messages are added
@@ -465,8 +463,23 @@ export default function ExpandableChatDemo() {
                 // If this shows the calendar, trigger it and pause
                 if (conversationScript[nextStep].showCalendar) {
                   setTimeout(() => {
-                    // Start mouse simulation
-                    simulateMouseInteraction();
+                    
+                    // Simulate user clicking on January 15th after 2 seconds
+                    setTimeout(() => {
+                      const january15 = new Date(2025, 0, 15); // January 15, 2025
+                      setSelectedDate(january15);
+                      
+                      // Continue conversation after 10 more seconds (12 total)
+                      setTimeout(() => {
+                        setSelectedDate(undefined);
+                        
+                        if (nextStep === conversationScript.length - 1) {
+                          setIsConversationComplete(true);
+                        } else {
+                          startAutoConversation(nextStep + 1);
+                        }
+                      }, 10000);
+                    }, 2000);
                   }, 1000);
                   return; // Don't continue immediately
                 }
@@ -493,110 +506,6 @@ export default function ExpandableChatDemo() {
       // Skip AI messages as they're already handled
       startAutoConversation(step + 1);
     }
-  };
-
-  // Mouse simulation function
-  const simulateMouseInteraction = () => {
-    setIsMouseAnimating(true);
-    setMousePosition({ x: 0, y: 0, visible: true });
-    
-    // Step 1: Move to calendar (2 seconds)
-    setTimeout(() => {
-      const calendarElement = document.querySelector('[data-calendar="true"]');
-      if (calendarElement) {
-        const rect = calendarElement.getBoundingClientRect();
-        const targetX = rect.left + rect.width / 2;
-        const targetY = rect.top + rect.height / 2;
-        
-        setMousePosition({ x: targetX, y: targetY, visible: true });
-        
-        // Step 2: Click on January 15th (after 1 second)
-        setTimeout(() => {
-          const january15 = new Date(2025, 0, 15);
-          setSelectedDate(january15);
-          
-          // Step 3: Move to time selection (after 1.5 seconds)
-          setTimeout(() => {
-            const timeButton = document.querySelector('[data-time="19:00"]');
-            if (timeButton) {
-              const timeRect = timeButton.getBoundingClientRect();
-              setMousePosition({ 
-                x: timeRect.left + timeRect.width / 2, 
-                y: timeRect.top + timeRect.height / 2, 
-                visible: true 
-              });
-              
-              // Step 4: Click time (after 1 second)
-              setTimeout(() => {
-                // Visual click effect
-                setMousePosition(prev => ({ ...prev, clicking: true }));
-                
-                setTimeout(() => {
-                  setMousePosition(prev => ({ ...prev, clicking: false }));
-                  
-                  // Step 5: Move to guest count + button (after 1 second)
-                  setTimeout(() => {
-                    const plusButton = document.querySelector('[data-guest-plus="true"]');
-                    if (plusButton) {
-                      const plusRect = plusButton.getBoundingClientRect();
-                      setMousePosition({ 
-                        x: plusRect.left + plusRect.width / 2, 
-                        y: plusRect.top + plusRect.height / 2, 
-                        visible: true 
-                      });
-                      
-                      // Step 6: Click + button (after 1 second)
-                      setTimeout(() => {
-                        setMousePosition(prev => ({ ...prev, clicking: true }));
-                        
-                        setTimeout(() => {
-                          setMousePosition(prev => ({ ...prev, clicking: false }));
-                          
-                          // Step 7: Move to confirm button (after 1.5 seconds)
-                          setTimeout(() => {
-                            const confirmButton = document.querySelector('[data-confirm="true"]');
-                            if (confirmButton) {
-                              const confirmRect = confirmButton.getBoundingClientRect();
-                              setMousePosition({ 
-                                x: confirmRect.left + confirmRect.width / 2, 
-                                y: confirmRect.top + confirmRect.height / 2, 
-                                visible: true 
-                              });
-                              
-                              // Step 8: Click confirm (after 1 second)
-                              setTimeout(() => {
-                                setMousePosition(prev => ({ ...prev, clicking: true }));
-                                
-                                setTimeout(() => {
-                                  setMousePosition(prev => ({ ...prev, clicking: false }));
-                                  
-                                  // Hide mouse and continue conversation (after 1 second)
-                                  setTimeout(() => {
-                                    setMousePosition({ x: 0, y: 0, visible: false });
-                                    setIsMouseAnimating(false);
-                                    setSelectedDate(undefined);
-                                    
-                                    if (currentStep === conversationScript.length - 1) {
-                                      setIsConversationComplete(true);
-                                    } else {
-                                      startAutoConversation(currentStep + 1);
-                                    }
-                                  }, 1000);
-                                }, 200);
-                              }, 1000);
-                            }
-                          }, 1500);
-                        }, 200);
-                      }, 1000);
-                    }
-                  }, 1000);
-                }, 200);
-              }, 1000);
-            }
-          }, 1500);
-        }, 1000);
-      }
-    }, 2000);
   };
 
   const handleSubmit = (e: FormEvent) => {
@@ -632,7 +541,10 @@ export default function ExpandableChatDemo() {
         // Handle calendar for manual interaction
         if (conversationScript[nextAiStep].showCalendar) {
           setTimeout(() => {
-            simulateMouseInteraction();
+            setTimeout(() => {
+              const january15 = new Date(2025, 0, 15);
+              setSelectedDate(january15);
+            }, 12000);
           }, 1000);
         }
         // Check if conversation is complete
@@ -658,45 +570,6 @@ export default function ExpandableChatDemo() {
 
   return (
     <div className="h-[800px] relative">
-      {/* Animated Mouse Cursor */}
-      {mousePosition.visible && (
-        <div
-          className={`fixed pointer-events-none z-[9999] transition-all duration-1000 ease-out ${
-            mousePosition.clicking ? 'scale-90' : 'scale-100'
-          }`}
-          style={{
-            left: `${mousePosition.x}px`,
-            top: `${mousePosition.y}px`,
-            transform: 'translate(-50%, -50%)',
-          }}
-        >
-          <div className="relative">
-            {/* Mouse cursor */}
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              className={`drop-shadow-lg transition-all duration-200 ${
-                mousePosition.clicking ? 'scale-90' : 'scale-100'
-              }`}
-            >
-              <path
-                d="M8.5 2L8.5 14.5L11.5 11L15 17L17 16L13.5 10L17.5 10L8.5 2Z"
-                fill="white"
-                stroke="black"
-                strokeWidth="1"
-              />
-            </svg>
-            
-            {/* Click effect */}
-            {mousePosition.clicking && (
-              <div className="absolute -top-2 -left-2 w-8 h-8 border-2 border-blue-500 rounded-full animate-ping opacity-75" />
-            )}
-          </div>
-        </div>
-      )}
-      
       <ExpandableChat
         size="xl"
         position="bottom-right"
@@ -745,15 +618,13 @@ export default function ExpandableChatDemo() {
                       </div>
                       
                       <div className="flex justify-center">
-                        <div data-calendar="true">
-                          <Calendar
-                            mode="single"
-                            selected={selectedDate}
-                            onSelect={setSelectedDate}
-                            defaultMonth={new Date(2025, 0)} // January 2025
-                            className="rounded-lg border border-slate-200 p-2 bg-white shadow-sm scale-90"
-                          />
-                        </div>
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={setSelectedDate}
+                          defaultMonth={new Date(2025, 0)} // January 2025
+                          className="rounded-lg border border-slate-200 p-2 bg-white shadow-sm scale-90"
+                        />
                       </div>
                       
                       {selectedDate && (
@@ -776,7 +647,6 @@ export default function ExpandableChatDemo() {
                               {['18:00', '18:30', '19:00', '19:30', '20:00', '20:30'].map(time => (
                                 <button
                                   key={time}
-                                  data-time={time}
                                   className="p-1.5 text-xs border border-blue-300 rounded bg-white hover:bg-blue-100 transition-colors"
                                 >
                                   {time}
@@ -800,10 +670,7 @@ export default function ExpandableChatDemo() {
                               <span className="px-3 py-1 bg-purple-600 text-white text-xs rounded font-medium min-w-[40px] text-center">
                                 4
                               </span>
-                              <button 
-                                data-guest-plus="true"
-                                className="w-6 h-6 rounded-full border border-purple-300 bg-white hover:bg-purple-100 flex items-center justify-center text-xs"
-                              >
+                              <button className="w-6 h-6 rounded-full border border-purple-300 bg-white hover:bg-purple-100 flex items-center justify-center text-xs">
                                 +
                               </button>
                             </div>
@@ -819,10 +686,7 @@ export default function ExpandableChatDemo() {
                                   day: 'numeric' 
                                 })}</strong> • <strong>⏰ 19:00</strong> • <strong>👥 4 personer</strong>
                               </p>
-                              <button 
-                                data-confirm="true"
-                                className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors text-xs font-medium mt-2"
-                              >
+                              <button className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors text-xs font-medium mt-2">
                                 ✅ Bekräfta bokning
                               </button>
                             </div>
