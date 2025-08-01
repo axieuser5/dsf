@@ -464,12 +464,12 @@ export default function ExpandableChatDemo() {
                 if (conversationScript[nextStep].showCalendar) {
                   setTimeout(() => {
                     
-                    // Simulate user clicking on August 15th after 2 seconds
+                    // Simulate user clicking on January 15th after 2 seconds
                     setTimeout(() => {
-                      const august15 = new Date(2024, 7, 15); // August 15, 2024
-                      setSelectedDate(august15);
+                      const january15 = new Date(2025, 0, 15); // January 15, 2025
+                      setSelectedDate(january15);
                       
-                      // Continue conversation after 6 more seconds
+                      // Continue conversation after 10 more seconds (12 total)
                       setTimeout(() => {
                         setSelectedDate(undefined);
                         
@@ -478,7 +478,7 @@ export default function ExpandableChatDemo() {
                         } else {
                           startAutoConversation(nextStep + 1);
                         }
-                      }, 6000);
+                      }, 10000);
                     }, 2000);
                   }, 1000);
                   return; // Don't continue immediately
@@ -542,9 +542,9 @@ export default function ExpandableChatDemo() {
         if (conversationScript[nextAiStep].showCalendar) {
           setTimeout(() => {
             setTimeout(() => {
-              const august15 = new Date(2024, 7, 15);
-              setSelectedDate(august15);
-            }, 8000);
+              const january15 = new Date(2025, 0, 15);
+              setSelectedDate(january15);
+            }, 12000);
           }, 1000);
         }
         // Check if conversation is complete
@@ -613,7 +613,7 @@ export default function ExpandableChatDemo() {
                           Välj datum för bokning 📅
                         </h3>
                         <p className="text-xs text-slate-600">
-                          Augusti 2024 - Klicka på ett datum
+                          Januari 2025 - Klicka på ett datum
                         </p>
                       </div>
                       
@@ -622,21 +622,75 @@ export default function ExpandableChatDemo() {
                           mode="single"
                           selected={selectedDate}
                           onSelect={setSelectedDate}
-                          defaultMonth={new Date(2024, 7)} // August 2024
+                          defaultMonth={new Date(2025, 0)} // January 2025
                           className="rounded-lg border border-slate-200 p-2 bg-white shadow-sm scale-90"
                         />
                       </div>
                       
                       {selectedDate && (
-                        <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded-lg text-center">
-                          <p className="text-xs text-green-800 font-medium">
-                            ✅ Valt datum: {selectedDate.toLocaleDateString('sv-SE', { 
-                              weekday: 'long', 
-                              year: 'numeric', 
-                              month: 'long', 
-                              day: 'numeric' 
-                            })}
-                          </p>
+                        <div className="mt-3 space-y-3">
+                          <div className="p-2 bg-green-50 border border-green-200 rounded-lg text-center">
+                            <p className="text-xs text-green-800 font-medium">
+                              ✅ Valt datum: {selectedDate.toLocaleDateString('sv-SE', { 
+                                weekday: 'long', 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric' 
+                              })}
+                            </p>
+                          </div>
+                          
+                          {/* Time Selection */}
+                          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <h4 className="text-xs font-semibold text-blue-800 mb-2 text-center">Välj tid ⏰</h4>
+                            <div className="grid grid-cols-3 gap-1">
+                              {['18:00', '18:30', '19:00', '19:30', '20:00', '20:30'].map(time => (
+                                <button
+                                  key={time}
+                                  className="p-1.5 text-xs border border-blue-300 rounded bg-white hover:bg-blue-100 transition-colors"
+                                >
+                                  {time}
+                                </button>
+                              ))}
+                            </div>
+                            <div className="mt-2 text-center">
+                              <span className="inline-block px-2 py-1 bg-blue-600 text-white text-xs rounded font-medium">
+                                19:00 ✓
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {/* Guest Count */}
+                          <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                            <h4 className="text-xs font-semibold text-purple-800 mb-2 text-center">Antal gäster 👥</h4>
+                            <div className="flex justify-center items-center gap-3">
+                              <button className="w-6 h-6 rounded-full border border-purple-300 bg-white hover:bg-purple-100 flex items-center justify-center text-xs">
+                                -
+                              </button>
+                              <span className="px-3 py-1 bg-purple-600 text-white text-xs rounded font-medium min-w-[40px] text-center">
+                                4
+                              </span>
+                              <button className="w-6 h-6 rounded-full border border-purple-300 bg-white hover:bg-purple-100 flex items-center justify-center text-xs">
+                                +
+                              </button>
+                            </div>
+                          </div>
+                          
+                          {/* Final Confirmation */}
+                          <div className="p-3 bg-green-100 border border-green-300 rounded-lg">
+                            <div className="text-center space-y-1">
+                              <p className="text-xs text-green-800">
+                                <strong>📅 {selectedDate.toLocaleDateString('sv-SE', { 
+                                  weekday: 'short', 
+                                  month: 'short', 
+                                  day: 'numeric' 
+                                })}</strong> • <strong>⏰ 19:00</strong> • <strong>👥 4 personer</strong>
+                              </p>
+                              <button className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors text-xs font-medium mt-2">
+                                ✅ Bekräfta bokning
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>
