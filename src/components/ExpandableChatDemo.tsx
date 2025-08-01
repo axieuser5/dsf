@@ -849,13 +849,13 @@ export default function ExpandableChatDemo() {
                             <h4 className="text-xs font-semibold text-purple-800 mb-2 text-center">Antal gäster 👥</h4>
                             <div className="flex justify-center items-center gap-3">
                               <button className="w-6 h-6 rounded-full border border-purple-300 bg-white hover:bg-purple-100 flex items-center justify-center text-xs">
-                                -
+                                <span data-guest-minus>-</span>
                               </button>
                               <span className="px-3 py-1 bg-purple-600 text-white text-xs rounded font-medium min-w-[40px] text-center">
                                 4
                               </span>
                               <button className="w-6 h-6 rounded-full border border-purple-300 bg-white hover:bg-purple-100 flex items-center justify-center text-xs">
-                                +
+                                <span data-guest-plus>+</span>
                               </button>
                             </div>
                           </div>
