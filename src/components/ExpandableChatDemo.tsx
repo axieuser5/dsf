@@ -351,7 +351,7 @@ export default function ExpandableChatDemo() {
     { "sender": "user", "content": "Okej, bra! Och hur är det med tillgänglighet? En i vårt sällskap använder rullstol." },
     { "sender": "ai", "content": "Det är inga problem alls. Vi har rullstolsanpassad entré, hiss och flera bord med gott om utrymme. Toaletten är också tillgänglighetsanpassad." },
     { "sender": "user", "content": "Tack, då har jag bestämt mig – jag vill boka ett bord!" },
-    { "sender": "ai", "content": "Vad roligt! Här är vårt bokningssystem – välj gärna datum och tid som passar er:", "showBookingIframe": true },
+    { "sender": "ai", "content": "Vad roligt! Här är vårt bokningssystem – välj gärna datum och tid som passar er:", "showCalendar": true },
     { "sender": "user", "content": "Perfekt, tack för hjälpen!" },
     { "sender": "ai", "content": "Jag är fortfarande här om du behöver hjälp - du kommer få bokningsbekräftelse efter du har valt datum och tid! Säg bara om det finns något jag kan hjälpa dig med!" }
   ];
@@ -362,7 +362,6 @@ export default function ExpandableChatDemo() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
-  const [showBookingIframe, setShowBookingIframe] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -389,8 +388,7 @@ export default function ExpandableChatDemo() {
         setMessages([{
           id: 1,
           content: conversationScript[0].content,
-          sender: "ai",
-          isBookingIframe: conversationScript[0].isBookingIframe
+          sender: "ai"
         }]);
         setCurrentStep(1);
         
@@ -456,25 +454,23 @@ export default function ExpandableChatDemo() {
                   id: Date.now() + 1,
                   content: conversationScript[nextStep].content,
                   sender: "ai",
-                  showBookingIframe: conversationScript[nextStep].showBookingIframe
+                  showCalendar: conversationScript[nextStep].showCalendar
                 };
                 
                 setMessages(prev => [...prev, aiMessage]);
                 setIsLoading(false);
 
-                // If this shows the booking iframe, trigger it and pause
-                if (conversationScript[nextStep].showBookingIframe) {
+                // If this shows the calendar, trigger it and pause
+                if (conversationScript[nextStep].showCalendar) {
                   setTimeout(() => {
-                    setShowCalendar(true);
                     
                     // Simulate user clicking on August 15th after 2 seconds
                     setTimeout(() => {
                       const august15 = new Date(2024, 7, 15); // August 15, 2024
                       setSelectedDate(august15);
                       
-                      // Close calendar after 6 more seconds and continue conversation
+                      // Continue conversation after 6 more seconds
                       setTimeout(() => {
-                        setShowCalendar(false);
                         setSelectedDate(undefined);
                         
                         if (nextStep === conversationScript.length - 1) {
@@ -535,19 +531,19 @@ export default function ExpandableChatDemo() {
           id: messages.length + 2,
           content: conversationScript[nextAiStep].content,
           sender: "ai",
-          showBookingIframe: conversationScript[nextAiStep].showBookingIframe
+          showCalendar: conversationScript[nextAiStep].showCalendar
         };
         
         setMessages(prev => [...prev, aiMessage]);
         setCurrentStep(nextAiStep + 1);
         setIsLoading(false);
 
-        // Handle booking iframe for manual interaction
-        if (conversationScript[nextAiStep].showBookingIframe) {
+        // Handle calendar for manual interaction
+        if (conversationScript[nextAiStep].showCalendar) {
           setTimeout(() => {
-            setShowCalendar(true);
             setTimeout(() => {
-              setShowCalendar(false);
+              const august15 = new Date(2024, 7, 15);
+              setSelectedDate(august15);
             }, 8000);
           }, 1000);
         }
@@ -573,9 +569,9 @@ export default function ExpandableChatDemo() {
   };
 
   return (
-    <div className="h-[600px] relative">
+    <div className="h-[800px] relative">
       <ExpandableChat
-        size="lg"
+        size="xl"
         position="bottom-right"
         icon={<Bot className="h-6 w-6" />}
         isOpen={chatOpen}
@@ -608,6 +604,43 @@ export default function ExpandableChatDemo() {
                   variant={message.sender === "user" ? "sent" : "received"}
                 >
                   {message.content}
+                  
+                  {/* Calendar inside the AI message */}
+                  {message.showCalendar && (
+                    <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                      <div className="text-center mb-3">
+                        <h3 className="text-sm font-semibold text-slate-800 mb-1">
+                          Välj datum för bokning 📅
+                        </h3>
+                        <p className="text-xs text-slate-600">
+                          Augusti 2024 - Klicka på ett datum
+                        </p>
+                      </div>
+                      
+                      <div className="flex justify-center">
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={setSelectedDate}
+                          defaultMonth={new Date(2024, 7)} // August 2024
+                          className="rounded-lg border border-slate-200 p-2 bg-white shadow-sm scale-90"
+                        />
+                      </div>
+                      
+                      {selectedDate && (
+                        <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded-lg text-center">
+                          <p className="text-xs text-green-800 font-medium">
+                            ✅ Valt datum: {selectedDate.toLocaleDateString('sv-SE', { 
+                              weekday: 'long', 
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric' 
+                            })}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </ChatBubbleMessage>
               </ChatBubble>
             ))}
@@ -672,54 +705,6 @@ export default function ExpandableChatDemo() {
           </form>
         </ExpandableChatFooter>
       </ExpandableChat>
-
-      {/* Booking Calendar Inside Chat */}
-      {showCalendar && (
-        <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 z-50 animate-in slide-in-from-bottom duration-300">
-          <div className="flex flex-col items-center">
-            <div className="mb-4 text-center">
-              <h3 className="text-lg font-semibold text-slate-800 mb-1">
-                Välj datum för bokning 📅
-              </h3>
-              <p className="text-sm text-slate-600">
-                Augusti 2024 - Klicka på ett datum
-              </p>
-            </div>
-            
-            <div className="flex justify-center">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                defaultMonth={new Date(2024, 7)} // August 2024
-                className="rounded-lg border border-slate-200 p-3 bg-white shadow-sm"
-                classNames={{
-                  day_button: selectedDate ? "bg-blue-600 text-white hover:bg-blue-700" : undefined,
-                }}
-              />
-            </div>
-            
-            {selectedDate && (
-              <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg text-center">
-                <p className="text-sm text-green-800 font-medium">
-                  ✅ Valt datum: {selectedDate.toLocaleDateString('sv-SE', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}
-                </p>
-              </div>
-            )}
-            
-            <div className="mt-3 text-center">
-              <p className="text-xs text-slate-500">
-                Kalendern stängs automatiskt om några sekunder...
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
