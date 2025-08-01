@@ -351,8 +351,7 @@ export default function ExpandableChatDemo() {
     { "sender": "user", "content": "Okej, bra! Och hur är det med tillgänglighet? En i vårt sällskap använder rullstol." },
     { "sender": "ai", "content": "Det är inga problem alls. Vi har rullstolsanpassad entré, hiss och flera bord med gott om utrymme. Toaletten är också tillgänglighetsanpassad." },
     { "sender": "user", "content": "Tack, då har jag bestämt mig – jag vill boka ett bord!" },
-    { "sender": "ai", "content": "Vad roligt! Här är vårt bokningssystem – välj gärna datum och tid som passar er:" },
-    { "sender": "ai", "content": "Bokningssystemet öppnas nu...", "showCalendarPopup": true },
+    { "sender": "ai", "content": "Vad roligt! Här är vårt bokningssystem – välj gärna datum och tid som passar er:", "showBookingIframe": true },
     { "sender": "user", "content": "Perfekt, tack för hjälpen!" },
     { "sender": "ai", "content": "Jag är fortfarande här om du behöver hjälp - du kommer få bokningsbekräftelse efter du har valt datum och tid! Säg bara om det finns något jag kan hjälpa dig med!" }
   ];
@@ -363,7 +362,7 @@ export default function ExpandableChatDemo() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
-  const [showCalendarPopup, setShowCalendarPopup] = useState(false);
+  const [showBookingIframe, setShowBookingIframe] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when new messages are added
@@ -455,22 +454,22 @@ export default function ExpandableChatDemo() {
                   id: Date.now() + 1,
                   content: conversationScript[nextStep].content,
                   sender: "ai",
-                  showCalendarPopup: conversationScript[nextStep].showCalendarPopup
+                  showBookingIframe: conversationScript[nextStep].showBookingIframe
                 };
                 
                 setMessages(prev => [...prev, aiMessage]);
                 setIsLoading(false);
 
-                // If this shows the calendar popup, trigger it and pause
-                if (conversationScript[nextStep].showCalendarPopup) {
+                // If this shows the booking iframe, trigger it and pause
+                if (conversationScript[nextStep].showBookingIframe) {
                   setTimeout(() => {
-                    setShowCalendarPopup(true);
+                    setShowBookingIframe(true);
                     
-                    // Auto-close popup after 8 seconds and continue conversation
+                    // Auto-close iframe after 8 seconds and continue conversation
                     setTimeout(() => {
-                      setShowCalendarPopup(false);
+                      setShowBookingIframe(false);
                       
-                      // Continue conversation after popup closes
+                      // Continue conversation after iframe closes
                       setTimeout(() => {
                         if (nextStep === conversationScript.length - 1) {
                           setIsConversationComplete(true);
@@ -530,19 +529,19 @@ export default function ExpandableChatDemo() {
           id: messages.length + 2,
           content: conversationScript[nextAiStep].content,
           sender: "ai",
-          showCalendarPopup: conversationScript[nextAiStep].showCalendarPopup
+          showBookingIframe: conversationScript[nextAiStep].showBookingIframe
         };
         
         setMessages(prev => [...prev, aiMessage]);
         setCurrentStep(nextAiStep + 1);
         setIsLoading(false);
 
-        // Handle calendar popup for manual interaction
-        if (conversationScript[nextAiStep].showCalendarPopup) {
+        // Handle booking iframe for manual interaction
+        if (conversationScript[nextAiStep].showBookingIframe) {
           setTimeout(() => {
-            setShowCalendarPopup(true);
+            setShowBookingIframe(true);
             setTimeout(() => {
-              setShowCalendarPopup(false);
+              setShowBookingIframe(false);
             }, 8000);
           }, 1000);
         }
@@ -668,25 +667,37 @@ export default function ExpandableChatDemo() {
         </ExpandableChatFooter>
       </ExpandableChat>
 
-      {/* Calendar Popup Modal */}
-      {showCalendarPopup && (
+      {/* Booking Calendar Iframe Modal */}
+      {showBookingIframe && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-lg shadow-2xl max-w-md w-full transform transition-all duration-300 scale-100">
-            <div className="p-6">
-              <div className="text-center mb-4">
-                <h3 className="text-xl font-semibold text-slate-800 mb-2">
-                  Boka ditt bord 🍽️
+          <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl h-[80vh] transform transition-all duration-300 scale-100 flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200">
+              <div>
+                <h3 className="text-xl font-semibold text-slate-800">
+                  Restaurang Stella - Bokningssystem 🍽️
                 </h3>
                 <p className="text-sm text-slate-600">
                   Välj datum och tid som passar er bäst
                 </p>
               </div>
-              <Calendar />
-              <div className="mt-4 text-center">
-                <p className="text-xs text-slate-500">
-                  Bokningssystemet stängs automatiskt om {" "}
-                  <span className="font-medium">8 sekunder</span>
-                </p>
+              <button 
+                onClick={() => setShowBookingIframe(false)}
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="flex-1 p-4">
+              <iframe
+                src="https://calendly.com/demo"
+                className="w-full h-full border-0 rounded-lg"
+                title="Booking Calendar"
+              />
+            </div>
+            <div className="p-4 border-t border-slate-200 text-center">
+              <p className="text-xs text-slate-500">
+                Bokningssystemet stängs automatiskt om <span className="font-medium">8 sekunder</span>
+              </p>
               </div>
             </div>
           </div>
